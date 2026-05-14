@@ -75,7 +75,7 @@ generate_synthetic.py
 generate_ultrasound_images.py
 ```
 
-Generated synthetic ultrasound artefacts to augment underrepresented classes and simulate realistic acquisition defects.
+Generated synthetic ultrasound images to augment underrepresented classes and simulate realistic acquisition defects.
 
 Synthetic transformations included:
 - Gaussian blur
@@ -83,8 +83,6 @@ Synthetic transformations included:
 - Brightness reduction
 - Noise injection
 - Probe angle distortion
-
-Because medical imaging datasets rarely arrive balanced, clean, or organized by people who enjoy naming files consistently.
 
 ---
 
@@ -151,7 +149,7 @@ Each inference generates:
 - Confidence score
 - Full probability distribution across all six classes
 - EigenCAM activation heatmap
-- Clinical recommendation text
+- Clinical guidance text
 
 ---
 
