@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FetalEcho QA — Ultrasound Quality AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #03060f;
+      --blue:    #3b82f6;
+      --cyan:    #06b6d4;
+      --green:   #10b981;
+      --amber:   #f59e0b;
+      --pink:    #ec4899;
+      --purple:  #6366f1;
+      --teal:    #14b8a6;
+      --surface: #0a1120;
+      --border:  #1a2744;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+    /* ══ NAV ══════════════════════════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(3,6,15,0.7);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(59,130,246,0.12);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .nav-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #1d4ed8, #06b6d4);
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .nav-pill {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      background: rgba(59,130,246,0.12); color: #60a5fa;
+      border: 1px solid rgba(59,130,246,0.25);
+      padding: 4px 12px; border-radius: 99px;
+    }
+    .nav-btn {
+      padding: 8px 20px; border-radius: 8px; border: none;
+      background: var(--blue); color: white;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover { background: #2563eb; }
+
+    /* ══ HERO ═════════════════════════════════════════════════════════ */
+    #hero {
+      position: relative; height: 100vh; min-height: 650px;
+      display: flex; align-items: center; overflow: hidden;
+    }
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 600px; padding: 0 60px;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #60a5fa; margin-bottom: 20px;
+    }
+    .hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: #06b6d4; animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.6)} }
+
+    .hero-title {
+      font-size: clamp(36px, 5vw, 62px);
+      font-weight: 800; line-height: 1.1; letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #e2e8f0 0%, #60a5fa 50%, #06b6d4 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 16px; color: #94a3b8; line-height: 1.7; margin-bottom: 36px; max-width: 460px;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      padding: 14px 28px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 0 30px rgba(59,130,246,0.35);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-ghost {
+      padding: 14px 28px; border-radius: 12px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: #3b82f6; color: #60a5fa; }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: #334155; font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+      animation: float 2.5s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+    .scroll-arrow { width: 20px; height: 20px; border-right: 2px solid #334155; border-bottom: 2px solid #334155; transform: rotate(45deg); }
+
+    /* ══ STATS ROW ════════════════════════════════════════════════════ */
+    .stats-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 24px 60px;
+      display: flex; justify-content: center; gap: 80px; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(135deg,#60a5fa,#06b6d4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+
+    /* ══ DEMO SECTION ═════════════════════════════════════════════════ */
+    #demo {
+      max-width: 1160px; margin: 0 auto;
+      padding: 80px 24px 60px;
+    }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #60a5fa; margin-bottom: 12px;
+    }
+    .section-title { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .section-sub { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+    /* panels */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    .panel-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+    .panel-body { padding: 20px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-2-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+    @media(max-width:768px) { .grid-2,.grid-2-3 { grid-template-columns:1fr; } .stats-bar { gap:40px; } .hero-content { padding:0 28px; } }
+
+    /* upload zone */
+    #upload-zone {
+      border: 2px dashed var(--border); border-radius: 14px; height: 300px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      position: relative; overflow: hidden;
+    }
+    #upload-zone:hover, #upload-zone.drag-over { border-color: var(--blue); background: rgba(59,130,246,0.04); }
+    #upload-zone svg { color: var(--muted); }
+    #upload-zone .ph-text { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.5; }
+    #upload-zone .ph-sub  { font-size: 11px; color: #1e3a5f; }
+    #file-input { display: none; }
+    #preview-img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: contain; border-radius: 12px; display: none; background: #03060f;
+    }
+    #preview-vid {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: contain; border-radius: 12px; display: none; background: #03060f;
+    }
+    .upload-overlay {
+      position: absolute; inset: 0; background: rgba(3,6,15,0.85); border-radius: 12px;
+      display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+      font-size: 13px; color: #60a5fa;
+    }
+
+    /* buttons */
+    #analyse-btn {
+      width: 100%; margin-top: 14px; padding: 13px;
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: white; border: none; border-radius: 12px;
+      font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 0 20px rgba(59,130,246,0.2);
+    }
+    #analyse-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    #analyse-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* toggle */
+    .toggle-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .toggle-btn {
+      flex: 1; padding: 7px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .toggle-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+    #cam-display {
+      height: 300px; border-radius: 12px; background: #080c18;
+      display: flex; align-items: center; justify-content: center;
+      color: #1e3a5f; font-size: 13px; overflow: hidden;
+    }
+    #cam-display img { width:100%; height:100%; object-fit:contain; }
+
+    /* video progress */
+    #video-progress { display:none; margin-top:10px; }
+    #video-progress p { font-size:11px; color:var(--muted); margin-bottom:6px; }
+    .prog-track { background:var(--border); border-radius:99px; height:5px; overflow:hidden; }
+    #progress-bar { height:5px; background:linear-gradient(90deg,#2563eb,#06b6d4); border-radius:99px; width:0%; transition:width 0.3s; }
+
+    /* video output */
+    #video-output { display:none; }
+    #result-video { width:100%; height:300px; border-radius:12px; background:#080c18; object-fit:contain; }
+    #download-btn {
+      display:block; margin-top:10px; text-align:center; padding:10px;
+      background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2);
+      border-radius:10px; color:#60a5fa; font-size:13px; font-weight:600; text-decoration:none;
+      transition:background 0.2s;
+    }
+    #download-btn:hover { background:rgba(59,130,246,0.2); }
+
+    /* results */
+    .quality-card, .probs-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 22px;
+    }
+    .quality-icon-wrap {
+      width: 54px; height: 54px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0;
+    }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 16px;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .guidance-box {
+      background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;
+      font-size: 13px; color: #94a3b8; line-height: 1.6; border-left: 3px solid var(--blue);
+    }
+    .guidance-box strong { display:block; font-size:10px; font-weight:700; color:#475569; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:5px; }
+
+    .probs-title { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:14px; }
+    .prob-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+    .prob-label { width:105px; font-size:12px; color:#94a3b8; }
+    .prob-label.active { color:var(--text); font-weight:600; }
+    .prob-track2 { flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+    .prob-fill { height:100%; border-radius:99px; transition:width 0.7s cubic-bezier(.4,0,.2,1); }
+    .prob-val { width:42px; text-align:right; font-size:12px; color:var(--muted); }
+    .prob-val.active { color:var(--text); font-weight:600; }
+
+    .empty-state { text-align:center; padding:36px 20px; color:#1e3a5f; font-size:14px; }
+    .empty-state div { font-size:32px; margin-bottom:8px; }
+
+    /* spinner */
+    .spinner { width:18px; height:18px; border:2px solid #ffffff33; border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ══ FOOTER ═══════════════════════════════════════════════════════ */
+    footer {
+      text-align:center; padding:28px; font-size:12px; color:#1e3a5f;
+      border-top:1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-icon">🫀</div>
+    FetalEcho QA
+  </div>
+  <span class="nav-pill">EfficientNet-B3 · GradCAM · EigenCAM</span>
+  <button class="nav-btn" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">Try Demo</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span class="hero-tag-dot"></span>
+      AI · Fetal Cardiology · Real-time QA
+    </div>
+    <h1 class="hero-title">
+      <span class="gradient-text">Intelligent Quality</span><br/>
+      Assessment for<br/>
+      Fetal Echo
+    </h1>
+    <p class="hero-sub">
+      Upload a first-trimester fetal echocardiography image or video. Get instant AI-powered quality classification, GradCAM attention maps, and real-time operator guidance — in under a second.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">
+        Try the Demo →
+      </button>
+      <button class="btn-ghost">View on Hugging Face</button>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-val">100%</div><div class="stat-label">Validation Accuracy</div></div>
+  <div class="stat"><div class="stat-val">6</div><div class="stat-label">Quality Classes</div></div>
+  <div class="stat"><div class="stat-val">25</div><div class="stat-label">Training Epochs</div></div>
+  <div class="stat"><div class="stat-val">&lt;1s</div><div class="stat-label">Inference Time</div></div>
+</div>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-tag">⚡ Live Demo</div>
+  <h2 class="section-title">Analyse an Ultrasound</h2>
+  <p class="section-sub">Upload an image or video clip — results appear instantly.</p>
+
+  <div class="grid-2">
+    <!-- Upload -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot"></span>Input — Image or Video</div>
+      <div class="panel-body">
+        <div id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" accept="image/*,video/*" />
+          <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p class="ph-text"><strong style="color:#94a3b8;">Click to upload</strong> or drag and drop</p>
+          <span class="ph-sub">JPG · PNG · MP4 · MOV</span>
+          <img id="preview-img" alt="preview" />
+          <video id="preview-vid" muted playsinline loop></video>
+          <div class="upload-overlay" id="upload-overlay">
+            <div class="spinner"></div>
+            <span id="overlay-text">Analysing…</span>
+          </div>
+        </div>
+        <div id="video-progress">
+          <p>Processing video…</p>
+          <div class="prog-track"><div id="progress-bar"></div></div>
+        </div>
+        <button id="analyse-btn" disabled onclick="runInference()">Analyse</button>
+      </div>
+    </div>
+
+    <!-- GradCAM / Video output -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot"></span><span id="right-panel-title">GradCAM Attention Map</span></div>
+      <div class="panel-body">
+        <div class="toggle-row" id="image-toggles">
+          <button class="toggle-btn active" id="btn-cam"  onclick="showView('cam')">EigenCAM Overlay</button>
+          <button class="toggle-btn"        id="btn-orig" onclick="showView('orig')">Original</button>
+        </div>
+        <div id="cam-display">Upload an image or video to begin</div>
+        <div id="video-output">
+          <video id="result-video" controls></video>
+          <a id="download-btn" href="#" download="analyzed.mp4">⬇ Download Analysed Video</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="grid-2-3">
+    <div class="quality-card" id="quality-card">
+      <div class="empty-state"><div>📊</div>Results will appear here</div>
+    </div>
+    <div class="probs-card" id="probs-card">
+      <div class="empty-state"><div>📈</div>Class probabilities</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built with EfficientNet-B3 · LIFE Project fetal echocardiography dataset · Synthetic quality augmentations · EigenCAM
+</footer>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  THREE.JS HERO — rotating wireframe heart + particles
+// ═══════════════════════════════════════════════════════
+(function() {
+  const canvas   = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(6, 0, 12);
+
+  // Heart shape
+  const heartShape = new THREE.Shape();
+  const x = 0, y = 0;
+  heartShape.moveTo(x + 2.5, y + 2.5);
+  heartShape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
+  heartShape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
+  heartShape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
+  heartShape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 5.5, x + 8, y + 3.5);
+  heartShape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
+  heartShape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
+
+  const extSettings = { depth: 2, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 0.4, bevelThickness: 0.4 };
+  const heartGeo    = new THREE.ExtrudeGeometry(heartShape, extSettings);
+  heartGeo.center();
+
+  // Solid mesh
+  const solidMat = new THREE.MeshPhongMaterial({
+    color: 0x0a1a3a, transparent: true, opacity: 0.85,
+    shininess: 80,
+  });
+  const solidMesh = new THREE.Mesh(heartGeo, solidMat);
+
+  // Wireframe
+  const wireMat  = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true, transparent: true, opacity: 0.4 });
+  const wireMesh = new THREE.Mesh(heartGeo, wireMat);
+
+  // Glowing edge lines
+  const edgesGeo  = new THREE.EdgesGeometry(heartGeo, 15);
+  const edgesMat  = new THREE.LineBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.9 });
+  const edgesMesh = new THREE.LineSegments(edgesGeo, edgesMat);
+
+  const heart = new THREE.Group();
+  heart.add(solidMesh, wireMesh, edgesMesh);
+  heart.position.set(3, 0, 0);
+  scene.add(heart);
+
+  // Lights
+  const ambLight  = new THREE.AmbientLight(0x0a1a3a, 2);
+  const blueLight = new THREE.PointLight(0x3b82f6, 4, 20);
+  const cyanLight = new THREE.PointLight(0x06b6d4, 3, 20);
+  blueLight.position.set(-5, 5, 5);
+  cyanLight.position.set(10, -3, 3);
+  scene.add(ambLight, blueLight, cyanLight);
+
+  // Background particles
+  const partCount = 200;
+  const partPositions = new Float32Array(partCount * 3);
+  for (let i = 0; i < partCount * 3; i++) partPositions[i] = (Math.random() - 0.5) * 40;
+  const partGeo = new THREE.BufferGeometry();
+  partGeo.setAttribute('position', new THREE.BufferAttribute(partPositions, 3));
+  const partMat  = new THREE.PointsMaterial({ color: 0x1e40af, size: 0.08, transparent: true, opacity: 0.6 });
+  const particles = new THREE.Points(partGeo, partMat);
+  scene.add(particles);
+
+  // Scan plane (horizontal slab that moves through the heart)
+  const scanGeo = new THREE.PlaneGeometry(12, 0.06);
+  const scanMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+  const scanPlane = new THREE.Mesh(scanGeo, scanMat);
+  scanPlane.position.set(3, 0, 0);
+  scene.add(scanPlane);
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+
+    heart.rotation.y += 0.006;
+    // Heartbeat pulse
+    const pulse = 1 + Math.sin(t * 2.5) * 0.04;
+    heart.scale.setScalar(pulse);
+
+    // Scan line sweep
+    const sweepH = Math.sin(t * 0.8) * 5;
+    scanPlane.position.y = sweepH;
+    scanMat.opacity = 0.15 + Math.abs(Math.sin(t * 0.8)) * 0.3;
+
+    // Pulsing lights
+    blueLight.intensity = 3 + Math.sin(t * 2.5) * 1.5;
+    cyanLight.intensity = 2 + Math.cos(t * 2.5) * 1;
+
+    particles.rotation.y += 0.001;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+
+// ═══════════════════════════════════════════════════════
+//  DEMO LOGIC
+// ═══════════════════════════════════════════════════════
+const COLORS = {
+  good:'#10b981', blurry:'#f59e0b', too_dark:'#6366f1',
+  low_contrast:'#3b82f6', noisy:'#ec4899', angled:'#14b8a6',
+};
+const ICONS = { good:'✅', blurry:'🌫️', too_dark:'🌑', low_contrast:'🔆', noisy:'📡', angled:'📐' };
+
+let camDataUrl = null, origDataUrl = null, currentView = 'cam';
+let selectedFile = null, isVideo = false;
+
+const fileInput   = document.getElementById('file-input');
+const uploadZone  = document.getElementById('upload-zone');
+const previewImg  = document.getElementById('preview-img');
+const previewVid  = document.getElementById('preview-vid');
+const analyseBtn  = document.getElementById('analyse-btn');
+const placeholders = uploadZone.querySelectorAll('svg, .ph-text, .ph-sub');
+
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+
+function loadFile(file) {
+  selectedFile = file;
+  isVideo = file.type.startsWith('video/');
+  placeholders.forEach(el => el.style.visibility = 'hidden');
+  uploadZone.classList.add('has-image');
+
+  const url = URL.createObjectURL(file);
+  if (isVideo) {
+    previewImg.style.display = 'none';
+    previewVid.src = url; previewVid.style.display = 'block'; previewVid.play();
+    analyseBtn.textContent = '▶  Analyse Video';
+  } else {
+    previewVid.style.display = 'none';
+    previewImg.src = url; previewImg.style.display = 'block';
+    analyseBtn.textContent = '▶  Analyse Image';
+  }
+  analyseBtn.disabled = false;
+  document.getElementById('cam-display').style.display = 'flex';
+  document.getElementById('video-output').style.display = 'none';
+  document.getElementById('image-toggles').style.display = isVideo ? 'none' : 'flex';
+  document.getElementById('right-panel-title').textContent = isVideo ? 'Analysed Video' : 'EigenCAM Attention Map';
+  document.getElementById('video-progress').style.display = 'none';
+}
+
+async function runInference() {
+  if (!selectedFile) return;
+  analyseBtn.disabled = true;
+  analyseBtn.innerHTML = '<div class="spinner"></div>';
+  document.getElementById('upload-overlay').style.display = 'flex';
+  document.getElementById('overlay-text').textContent = isVideo ? 'Processing video…' : 'Analysing…';
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  try {
+    if (isVideo) await runVideoInference(fd);
+    else         await runImageInference(fd);
+  } finally {
+    analyseBtn.disabled = false;
+    analyseBtn.textContent = isVideo ? '▶  Analyse Video' : '▶  Analyse Image';
+    document.getElementById('upload-overlay').style.display = 'none';
+  }
+}
+
+async function runImageInference(fd) {
+  try {
+    const res = await fetch('/predict', { method:'POST', body:fd });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error(text.slice(0,200)); }
+    if (data.error) throw new Error(data.error);
+    renderResults(data);
+  } catch(err) {
+    document.getElementById('quality-card').innerHTML =
+      `<div style="padding:20px;color:#f87171;font-size:13px;"><strong>Error:</strong> ${err.message}</div>`;
+  }
+}
+
+async function runVideoInference(fd) {
+  const bar = document.getElementById('progress-bar');
+  const div = document.getElementById('video-progress');
+  div.style.display = 'block';
+  let p = 0;
+  const tick = setInterval(() => { p = Math.min(p+1, 90); bar.style.width = p+'%'; }, 600);
+  try {
+    const res = await fetch('/predict-video', { method:'POST', body:fd });
+    if (!res.ok) {
+      const t = await res.text(); let msg;
+      try { msg = JSON.parse(t).error; } catch { msg = t.slice(0,200); }
+      throw new Error(msg);
+    }
+    clearInterval(tick); bar.style.width = '100%';
+    const blob   = await res.blob();
+    const vidUrl = URL.createObjectURL(blob);
+    document.getElementById('cam-display').style.display = 'none';
+    const vo = document.getElementById('video-output'); vo.style.display = 'block';
+    const rv = document.getElementById('result-video'); rv.src = vidUrl;
+    const dl = document.getElementById('download-btn'); dl.href = vidUrl; dl.download = 'analyzed.mp4';
+    document.getElementById('quality-card').innerHTML = '<div class="empty-state"><div>🎬</div>Video processed — see above</div>';
+    document.getElementById('probs-card').innerHTML   = '<div class="empty-state"><div>📈</div>Per-frame labels in video</div>';
+  } catch(err) {
+    clearInterval(tick);
+    document.getElementById('quality-card').innerHTML =
+      `<div style="padding:20px;color:#f87171;font-size:13px;"><strong>Error:</strong> ${err.message}</div>`;
+  } finally {
+    div.style.display = 'none'; bar.style.width = '0%';
+  }
+}
+
+function showView(v) {
+  currentView = v;
+  document.getElementById('btn-cam').classList.toggle('active', v==='cam');
+  document.getElementById('btn-orig').classList.toggle('active', v==='orig');
+  const d = document.getElementById('cam-display');
+  const url = v==='cam' ? camDataUrl : origDataUrl;
+  if (url) d.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" />`;
+}
+
+function renderResults(data) {
+  const { label, confidence, guidance, probs, cam_image, orig_image } = data;
+  const color = COLORS[label]||'#6b7280', icon = ICONS[label]||'❓';
+  camDataUrl  = 'data:image/jpeg;base64,' + cam_image;
+  origDataUrl = 'data:image/jpeg;base64,' + orig_image;
+  showView(currentView);
+
+  const isGood = label === 'good';
+  const sc = isGood ? '#10b981' : '#f59e0b';
+  const sb = isGood ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)';
+  document.getElementById('quality-card').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+      <div class="quality-icon-wrap" style="background:${color}22;">${icon}</div>
+      <div>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-0.3px;">${label.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+        <div style="font-size:13px;color:var(--muted);">Confidence: <strong style="color:${color};">${(confidence*100).toFixed(1)}%</strong></div>
+      </div>
+    </div>
+    <div class="status-pill" style="background:${sb};color:${sc};border:1px solid ${sc}33;margin-bottom:16px;">
+      <span class="status-dot" style="background:${sc};"></span>
+      ${isGood ? 'PASS' : 'REVIEW REQUIRED'}
+    </div>
+    <div class="guidance-box" style="border-left-color:${color};">
+      <strong>Operator Guidance</strong>${guidance}
+    </div>`;
+
+  const sorted = Object.entries(probs).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('probs-card').innerHTML = `
+    <div class="probs-title">Class Probabilities</div>
+    ${sorted.map(([cls,prob])=>{
+      const c=COLORS[cls]||'#6b7280', a=cls===label;
+      return `<div class="prob-row">
+        <span class="prob-label ${a?'active':''}">${cls.replace(/_/g,' ')}</span>
+        <div class="prob-track2"><div class="prob-fill" style="width:${(prob*100).toFixed(1)}%;background:${c};"></div></div>
+        <span class="prob-val ${a?'active':''}">${(prob*100).toFixed(1)}%</span>
+      </div>`;
+    }).join('')}`;
+}
+</script>
+</body>
+</html>
