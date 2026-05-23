@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import html2canvas from 'html2canvas'
 
-const API = 'https://samhitak10-fetal-echo-quality-demo.hf.space'
+const API = import.meta.env.VITE_API_URL ?? 'https://samhitak10-fetal-echo-quality-demo.hf.space'
 
 const CLASS_COLORS = {
   good:         '#22c55e',
