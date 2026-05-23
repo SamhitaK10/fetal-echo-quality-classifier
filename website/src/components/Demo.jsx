@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import html2canvas from 'html2canvas'
 
@@ -89,7 +89,7 @@ export default function Demo() {
   const [error,    setError]    = useState(null)
   const [zoomSrc,  setZoomSrc]  = useState(null)
   const [saving,   setSaving]   = useState(false)
-  const inputRef  = useRef()
+  const inputId   = useId()
   const cardRef   = useRef()
 
   const reset = () => {
@@ -127,7 +127,12 @@ export default function Demo() {
         setVideoUrl(URL.createObjectURL(await res.blob()))
       }
     } catch (e) {
-      setError(e.message)
+      const msg = e.message.toLowerCase()
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('refused')) {
+        setError('Cannot reach the server — the Hugging Face Space may be waking up. Wait 30 seconds and try again.')
+      } else {
+        setError(e.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -182,18 +187,18 @@ export default function Demo() {
         {/* Upload */}
         {showUpload && (
           <>
-            <div
+            <label
+              htmlFor={inputId}
               className={`upload-zone${dragging ? ' drag' : ''}`}
               onDragOver={e => { e.preventDefault(); setDragging(true) }}
               onDragLeave={() => setDragging(false)}
               onDrop={handleDrop}
-              onClick={() => inputRef.current?.click()}
             >
               <input
-                ref={inputRef}
+                id={inputId}
                 type="file"
                 className="file-input"
-                accept={tab === 'image' ? 'image/*' : 'video/*'}
+                accept={tab === 'image' ? 'image/*' : 'video/mp4,video/avi,video/quicktime,video/x-msvideo,video/mpeg,video/webm,video/*'}
                 onChange={e => handleFile(e.target.files[0])}
               />
               {file ? (
@@ -208,11 +213,11 @@ export default function Demo() {
                   <div className="upload-title">Drop your {tab === 'image' ? 'scan' : 'clip'} here</div>
                   <div className="upload-sub">or click to browse</div>
                   <div className="upload-hint">
-                    {tab === 'image' ? 'PNG · JPG · BMP — max 20 MB' : 'MP4 · AVI · MOV — max 200 MB'}
+                    {tab === 'image' ? 'PNG · JPG · BMP — max 20 MB' : 'MP4 · AVI · MOV · MPEG — max 200 MB'}
                   </div>
                 </>
               )}
-            </div>
+            </label>
             <button className="analyze-btn" onClick={analyze} disabled={!file}>
               ⚡ Analyze
             </button>
