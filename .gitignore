@@ -4,6 +4,7 @@ dataset_224/
 dataset.zip
 synthetic/
 synthetic_metadata.csv
+video_dataset/
 Fetal Echocardiography First Trimester/
 
 # ── Python ───────────────────────────────────────────────────────────────────
