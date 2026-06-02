@@ -371,18 +371,14 @@ The backend returns both the original ultrasound scan and the corresponding Eige
 
 ---
 
-# 🤖 AI Policy
+# 🤖 AI Usage
 
-The use of AI tools is allowed and encouraged on this project. The following AI tools were used:
+AI-assisted development tools were used throughout the project for implementation support and content generation.
 
-| Tool | Where Used |
-|---|---|
-| **Claude Code (Claude Sonnet 4.6 — Anthropic)** | React website (all components), FastAPI backend refinements, EigenCAM integration, CORS setup, Dockerfile, synthetic video dataset generator, deployment wiring, GitHub setup |
-| **Google Colab (Gemini suggestions)** | Notebook formatting and training loop guidance |
+| Tool | Usage |
+|--------|--------|
+| Claude Code (Anthropic Sonnet) | Frontend development, FastAPI backend implementation, EigenCAM integration, CORS configuration, Docker setup, deployment support, and synthetic medical image generation |
 
-All AI-generated code was reviewed, tested, and validated by the author. Model architecture decisions, dataset design, class definitions, and clinical guidance text were authored by the project owner.
-
----
 
 # 📜 License
 
