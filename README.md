@@ -4,6 +4,51 @@ A clinical ultrasound quality assessment system for first trimester fetal echoca
 
 The system classifies fetal ultrasound scan quality into six categories and generates explainability heatmaps alongside clinical quality guidance.
 
+This project is a prototype training and image quality control tool. It is not intended for diagnosis or clinical decision making.
+
+---
+
+# 📌 Project Overview
+
+Fetal echocardiography is used to evaluate fetal heart structures during pregnancy. In first trimester imaging, scan quality is especially important because the fetal heart is small, moving, and difficult to capture clearly.
+
+Poor scan quality makes clinical review harder and reduces the reliability of downstream AI systems. This project focuses on the step before diagnosis: checking whether a scan is clear enough for review, training, or further analysis.
+
+Fetal Echo Quality Classifier helps classify ultrasound scan quality into six categories:
+
+- Diagnostic Quality
+- Motion / Focus Artefact
+- Insufficient Gain
+- Low Tissue Contrast
+- Noise Artefact
+- Incorrect Probe Angle
+
+The system returns:
+
+- Predicted quality class
+- Confidence score
+- Full probability distribution
+- EigenCAM heatmap
+- Clinical guidance text
+- Downloadable report
+- Annotated video output for ultrasound clips
+
+---
+
+# 🎯 Motivation
+
+The main bottleneck this project addresses is image quality assessment in fetal echocardiography.
+
+In fetal ultrasound, a scan may look usable at first glance but still contain quality issues such as blur, low contrast, poor gain, acoustic noise, or incorrect probe angle. These problems matter because they affect whether the image is useful for training, review, or downstream AI analysis.
+
+This project was inspired by three needs:
+
+- Students and early career ultrasound learners need feedback on scan quality.
+- Rural or lower resource clinics may have limited access to specialized fetal echo expertise.
+- AI systems in medicine depend on input image quality before any diagnostic model becomes useful.
+
+The goal is not to diagnose fetal heart disease. The goal is to help users assess whether the image quality is strong enough for meaningful review.
+
 ---
 
 # ✨ Core Features
@@ -12,15 +57,49 @@ The system classifies fetal ultrasound scan quality into six categories and gene
 - EfficientNet-B3 fine tuned on ultrasound data
 - EigenCAM explainability overlays
 - Synthetic ultrasound augmentation pipeline
+- Manual annotation workflow
 - FastAPI inference backend
 - Clinical terminology normalization
+- Image upload and prediction
+- Video upload with frame level quality assessment
+- Downloadable report with prediction, confidence, probabilities, guidance, and heatmap
 - Dockerized deployment pipeline
+- Reproducible training and inference scripts
 
 ---
 
-# 📚 Dataset & Preprocessing
+# 🧭 Project Track
 
-## Ultrasound Quality Classes
+This project fits the following tracks:
+
+- Domain specific idea, healthcare AI
+- Application / Product
+- Research component through model training, dataset creation, evaluation, and explainability
+
+---
+
+# 📚 Dataset and Preprocessing
+
+## Dataset Source
+
+The dataset was built from publicly available and open source fetal echocardiography ultrasound images, with a focus on first trimester fetal echo examples.
+
+The dataset was used for prototype development and model experimentation. It was not used for clinical validation.
+
+After collecting images, I standardized the dataset by:
+
+- Filtering unusable or irrelevant samples
+- Resizing images for model input
+- Organizing images into labeled quality classes
+- Splitting images into training, validation, and testing folders
+- Tracking scan level labels in metadata files
+- Adding synthetic ultrasound style examples for underrepresented classes
+
+---
+
+# Ultrasound Quality Classes
+
+The model uses internal labels for training and maps them to clearer clinical labels in the interface.
 
 ```text
 good
@@ -29,357 +108,3 @@ too_dark
 low_contrast
 noisy
 angled
-```
-
-These labels correspond to clinically meaningful scan quality issues:
-
-| Internal Label | Clinical Label |
-|---|---|
-| blurry | Motion / Focus Artefact |
-| too_dark | Insufficient Gain |
-| low_contrast | Low Tissue Contrast |
-| noisy | Noise Artefact |
-| angled | Incorrect Probe Angle |
-| good | Diagnostic Quality |
-
----
-
-## Dataset Utilities
-
-### Manual Annotation Pipeline
-```bash
-label_quality.py
-```
-
-Interactive annotation tool used for manually labeling fetal ultrasound scans.
-
----
-
-### Dataset Organization
-```bash
-reorganize_dataset.py
-```
-
-Automatically organizes labeled images into:
-- train/
-- valid/
-- test/
-
-directory structures for model training.
-
----
-
-### Synthetic Ultrasound Augmentation
-```bash
-generate_synthetic.py
-generate_ultrasound_images.py
-```
-
-Generated synthetic ultrasound images to augment underrepresented classes and simulate realistic acquisition defects.
-
-Synthetic transformations included:
-- Gaussian blur
-- Contrast degradation
-- Brightness reduction
-- Noise injection
-- Probe angle distortion
-
----
-
-## Metadata Files
-
-```text
-labels.csv
-synthetic_metadata.csv
-```
-
-- `labels.csv` stores scan level annotations
-- `synthetic_metadata.csv` stores augmentation generation metadata
-
----
-
-# 🤖 Model Architecture
-
-## Base Architecture
-
-EfficientNet-B3 pretrained on ImageNet and fine tuned for fetal ultrasound quality classification.
-
-Selected because of:
-- Strong performance on medical imaging tasks
-- Efficient parameter scaling
-- Effective feature extraction for texture heavy ultrasound scans
-- Lower inference cost compared to larger CNN architectures
-
----
-
-## Training Workflow
-
-### Phase 1
-Train classification head while freezing pretrained backbone weights.
-
-### Phase 2
-Unfreeze final EfficientNet feature blocks and fine tune the network end to end.
-
----
-
-## Training Scripts
-
-```bash
-train_local.py
-train_colab.py
-train_colab.ipynb
-```
-
-Supports:
-- Local GPU training
-- Google Colab GPU training
-- Validation tracking
-- Checkpoint saving
-
----
-
-## Model Output
-
-```text
-model_weights.pth
-```
-
-Each inference generates:
-- Predicted quality classification
-- Confidence score
-- Full probability distribution across all six classes
-- EigenCAM activation heatmap
-- Clinical guidance text
-
----
-
-# 🔥 Explainability with EigenCAM
-
-EigenCAM was integrated to provide visual explainability for ultrasound quality predictions.
-
-The activation map highlights regions of the fetal ultrasound scan that contributed most strongly to the model's classification decision.
-
----
-
-## Hook Layer
-
-```python
-model.features[-2]
-```
-
-This captures high level spatial feature representations before pooling and classification.
-
----
-
-## Explainability Output
-
-Each prediction generates:
-- Original ultrasound scan
-- EigenCAM activation heatmap
-- Overlay visualization highlighting activated regions
-- Confidence distribution
-- Clinical interpretation guidance
-
-Heatmaps are returned as base64 encoded images through the API pipeline.
-
----
-
-# ⚡ FastAPI Backend
-
-Backend located in:
-
-```text
-hf_space/
-```
-
----
-
-# 🩺 API Endpoint
-
-## Image Classification
-
-```http
-POST /predict
-```
-
-### Supported Formats
-- PNG
-- JPG
-- BMP
-
-### Returns
-- Predicted quality class
-- Confidence score
-- Full class probabilities
-- Original image
-- EigenCAM heatmap
-- Clinical recommendation text
-
----
-
-# 🛠️ Backend Stack
-
-- FastAPI
-- PyTorch
-- timm
-- OpenCV
-- NumPy
-- EigenCAM
-- Docker
-- Hugging Face Spaces
-
----
-
-# ⚙️ Deployment Files
-
-```text
-main.py
-requirements.txt
-Dockerfile
-README.md
-```
-
----
-
-# 🔧 Engineering Fixes
-
-## EigenCAM Compatibility
-
-```python
-inplace=False
-```
-
-Applied to Dropout layers to prevent backward hook conflicts during activation extraction.
-
----
-
-## Cross Origin Support
-
-```python
-CORSMiddleware
-```
-
-Enabled frontend and backend communication across deployment origins.
-
----
-
-# 📂 Repository Structure
-
-```text
-fetal-echo-quality-classifier/
-│
-├── hf_space/
-│   ├── main.py
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── README.md
-│
-├── website/
-│
-├── train_local.py
-├── train_colab.py
-├── train_colab.ipynb
-├── generate_synthetic.py
-├── generate_ultrasound_images.py
-├── reorganize_dataset.py
-├── label_quality.py
-├── labels.csv
-├── synthetic_metadata.csv
-└── README.md
-```
-
----
-
-# 🚀 Installation
-
-## Clone Repository
-
-```bash
-git clone https://github.com/SamhitaK10/fetal-echo-quality-classifier.git
-cd fetal-echo-quality-classifier
-```
-
----
-
-# ⚙️ Backend Setup
-
-## Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Run FastAPI Server
-
-```bash
-uvicorn main:app --reload
-```
-
----
-
-# 🧪 Training
-
-## Local Training
-
-```bash
-python train_local.py
-```
-
----
-
-## Google Colab Training
-
-Open:
-
-```text
-train_colab.ipynb
-```
-
----
-
-# 📈 Prediction Response Structure
-
-Each API response contains both classification and explainability outputs for the uploaded ultrasound scan.
-
-## Example Response
-
-```json
-{
-  "label": "Insufficient Gain",
-  "confidence": 0.97,
-  "probabilities": {
-    "good": 0.01,
-    "too_dark": 0.97
-  }
-}
-```
-
-### Response Components
-
-| Field | Description |
-|---|---|
-| label | Predicted ultrasound quality class |
-| confidence | Model confidence for the predicted class |
-| probabilities | Probability distribution across all classes |
-| original_image | Base64 encoded uploaded scan |
-| heatmap | Base64 encoded EigenCAM activation map |
-| recommendation | Clinical guidance text associated with the prediction |
-
-The backend returns both the original ultrasound scan and the corresponding EigenCAM visualization so activated anatomical regions can be inspected alongside the classification output.
-
----
-
-# 🤖 AI Usage
-
-AI-assisted development tools were used throughout the project for implementation support and content generation.
-
-| Tool | Usage |
-|--------|--------|
-| Claude Code (Anthropic Sonnet) | Frontend development, FastAPI backend implementation, EigenCAM integration, CORS configuration, Docker setup, deployment support, and synthetic medical image generation |
-
-
-# 📜 License
-
-MIT License
