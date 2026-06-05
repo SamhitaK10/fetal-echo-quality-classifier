@@ -622,9 +622,7 @@ AI assisted development tools were used throughout the project for implementatio
 - OpenCV: https://opencv.org/
 - NumPy: https://numpy.org/
 - Hugging Face Spaces: https://huggingface.co/spaces
-- Fetal echocardiography datset: https://figshare.com/articles/figure/First_Trimester_Fetal_Echocardiography_Data_Set_for_Classification/21215492?file=37624184
-
-External image sources, datasets, papers, repositories, and libraries used in the project should be cited here with links before final submission.
+- First Trimester Fetal Echocardiography Dataset: https://figshare.com/articles/figure/First_Trimester_Fetal_Echocardiography_Data_Set_for_Classification/21215492?file=37624184
 
 ---
 
