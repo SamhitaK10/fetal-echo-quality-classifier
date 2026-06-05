@@ -616,15 +616,13 @@ AI assisted development tools were used throughout the project for implementatio
 
 ## 📚 Citations and Acknowledgements
 
-This project uses or builds on the following tools and resources:
-
-- PyTorch for model training and inference
-- timm for EfficientNet-B3 model support
-- FastAPI for backend API development
-- OpenCV and NumPy for image processing
-- EigenCAM for explainability heatmap generation
-- Hugging Face Spaces and Docker for deployment support
-- Publicly available fetal echocardiography ultrasound image sources used for prototype dataset creation
+- PyTorch: https://pytorch.org/
+- timm EfficientNet-B3: https://github.com/huggingface/pytorch-image-models
+- FastAPI: https://fastapi.tiangolo.com/
+- OpenCV: https://opencv.org/
+- NumPy: https://numpy.org/
+- Hugging Face Spaces: https://huggingface.co/spaces
+- Fetal echocardiography datset: https://figshare.com/articles/figure/First_Trimester_Fetal_Echocardiography_Data_Set_for_Classification/21215492?file=37624184
 
 External image sources, datasets, papers, repositories, and libraries used in the project should be cited here with links before final submission.
 
